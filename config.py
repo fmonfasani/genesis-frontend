@@ -3,6 +3,11 @@ Configuración y constantes para Genesis Frontend
 
 Este módulo contiene todas las configuraciones, constantes y defaults
 específicos para la generación de frontend en el ecosistema Genesis.
+
+Siguiendo la doctrina del ecosistema genesis-frontend:
+- Se especializa solo en frontend
+- Colabora con genesis-templates
+- No coordina workflows generales
 """
 
 import os
@@ -184,10 +189,19 @@ class FrontendConfig:
         # Configuración de entorno
         self.debug = os.getenv("GENESIS_FRONTEND_DEBUG", "false").lower() == "true"
         self.template_cache_enabled = os.getenv("GENESIS_TEMPLATE_CACHE", "true").lower() == "true"
+        self.llm_enabled = os.getenv("GENESIS_LLM_ENABLED", "true").lower() == "true"
         
         # Rutas
         self.base_path = Path(__file__).parent
         self.templates_path = self.base_path / "templates"
+        
+        # Configuración de LLMs
+        self.llm_config = {
+            "default_provider": os.getenv("GENESIS_LLM_PROVIDER", "claude"),
+            "model": os.getenv("GENESIS_LLM_MODEL", "claude-3-sonnet"),
+            "max_tokens": int(os.getenv("GENESIS_LLM_MAX_TOKENS", "4000")),
+            "temperature": float(os.getenv("GENESIS_LLM_TEMPERATURE", "0.3"))
+        }
         
     def get_framework_defaults(self, framework: str) -> Dict[str, Any]:
         """Obtener defaults para un framework específico"""
@@ -208,6 +222,8 @@ class FrontendConfig:
                 "tailwind_css": True,
                 "state_management": "redux_toolkit",
                 "ui_library": "tailwindcss",
+                "server_components": True,
+                "static_generation": True,
             }
         elif framework == "react":
             return {
@@ -216,6 +232,7 @@ class FrontendConfig:
                 "state_management": "redux_toolkit",
                 "ui_library": "tailwindcss",
                 "routing": True,
+                "spa": True,
             }
         elif framework == "vue":
             return {
@@ -225,6 +242,7 @@ class FrontendConfig:
                 "state_management": "pinia",
                 "ui_library": "custom",
                 "router": True,
+                "sfc": True,  # Single File Components
             }
         else:
             return base_defaults
@@ -291,6 +309,68 @@ class FrontendConfig:
                 errors.append(f"State management '{state_mgmt}' no compatible con {framework}")
         
         return errors
+    
+    def get_llm_prompt_templates(self) -> Dict[str, str]:
+        """Obtener templates de prompts para LLMs"""
+        return {
+            "component_generation": """
+Generate a {framework} component with the following specifications:
+- Component name: {component_name}
+- Props: {props}
+- Styling: {styling}
+- TypeScript: {typescript}
+- Features: {features}
+
+Please follow best practices for {framework} development.
+            """.strip(),
+            
+            "page_generation": """
+Generate a {framework} page component with:
+- Page name: {page_name}
+- Layout: {layout}
+- Data fetching: {data_fetching}
+- SEO optimization: {seo}
+- TypeScript: {typescript}
+
+Include proper error handling and loading states.
+            """.strip(),
+            
+            "config_generation": """
+Generate a {config_type} configuration file for {framework}:
+- Build tool: {build_tool}
+- Features: {features}
+- Environment: {environment}
+- Optimization: {optimization}
+
+Ensure the configuration follows current best practices.
+            """.strip()
+        }
+    
+    def get_optimization_rules(self) -> Dict[str, List[str]]:
+        """Obtener reglas de optimización por framework"""
+        return {
+            "nextjs": [
+                "Use App Router for new projects",
+                "Implement Server Components where possible",
+                "Enable Static Generation for static content",
+                "Use Image component for optimization",
+                "Implement proper SEO metadata"
+            ],
+            "react": [
+                "Use React.memo for expensive components",
+                "Implement code splitting with lazy loading",
+                "Use useCallback and useMemo appropriately",
+                "Optimize bundle size with tree shaking",
+                "Implement proper error boundaries"
+            ],
+            "vue": [
+                "Use Composition API for better reusability",
+                "Implement proper reactive patterns",
+                "Use defineAsyncComponent for code splitting",
+                "Optimize with v-memo directive when needed",
+                "Implement proper TypeScript integration"
+            ]
+        }
 
 
 # Instancia global de configuración
@@ -350,4 +430,43 @@ FILE_EXTENSIONS = {
     "vue": [".vue", ".ts", ".js"],
     "angular": [".component.ts", ".service.ts", ".module.ts"],
     "svelte": [".svelte", ".ts", ".js"],
+}
+
+# Patrones de código por framework para validación
+CODE_PATTERNS = {
+    "nextjs": {
+        "app_router": r"export\s+default\s+function\s+\w+\(",
+        "server_component": r"async\s+function\s+\w+\(",
+        "client_component": r"['\"]use\s+client['\"]",
+    },
+    "react": {
+        "functional_component": r"const\s+\w+:\s*React\.FC",
+        "hook": r"use[A-Z]\w*\s*=",
+        "context": r"createContext\s*\(",
+    },
+    "vue": {
+        "composition_api": r"<script\s+setup",
+        "reactive": r"ref\(|reactive\(",
+        "computed": r"computed\(",
+    }
+}
+
+# Configuraciones de calidad de código
+CODE_QUALITY_RULES = {
+    "typescript": {
+        "strict": True,
+        "no_any": False,  # Permitir any en casos específicos
+        "no_unused_vars": True,
+        "prefer_const": True,
+    },
+    "eslint": {
+        "max_lines": 300,
+        "max_complexity": 10,
+        "prefer_arrow_functions": True,
+    },
+    "accessibility": {
+        "alt_text_required": True,
+        "color_contrast": "AA",
+        "keyboard_navigation": True,
+    }
 }

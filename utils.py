@@ -3,6 +3,11 @@ Utilidades para Genesis Frontend
 
 Este módulo contiene funciones de utilidad específicas para la generación
 de frontend en el ecosistema Genesis.
+
+Siguiendo la doctrina del ecosistema genesis-frontend:
+- Se especializa solo en frontend
+- Colabora con genesis-templates  
+- No coordina workflows generales
 """
 
 import json
@@ -428,35 +433,6 @@ def extract_dependencies_from_content(content: str) -> List[str]:
     return sorted(list(dependencies))
 
 
-def calculate_project_size(project_path: Path) -> Dict[str, Any]:
-    """
-    Calcular tamaño del proyecto
-    
-    Args:
-        project_path: Ruta del proyecto
-        
-    Returns:
-        Estadísticas del proyecto
-    """
-    total_size = 0
-    file_count = 0
-    dir_count = 0
-    
-    for item in project_path.rglob('*'):
-        if item.is_file():
-            total_size += item.stat().st_size
-            file_count += 1
-        elif item.is_dir():
-            dir_count += 1
-    
-    return {
-        "total_size_bytes": total_size,
-        "total_size_mb": round(total_size / (1024 * 1024), 2),
-        "file_count": file_count,
-        "directory_count": dir_count,
-    }
-
-
 def get_dev_server_config(framework: str, custom_port: Optional[int] = None) -> Dict[str, Any]:
     """
     Obtener configuración del servidor de desarrollo
@@ -619,3 +595,235 @@ def extract_schema_entities(schema: Dict[str, Any]) -> List[Dict[str, Any]]:
         entities = schema["database"]["entities"]
     
     return entities if isinstance(entities, list) else []
+
+
+def validate_typescript_syntax(code: str) -> Dict[str, Any]:
+    """
+    Validar sintaxis básica de TypeScript
+    
+    Args:
+        code: Código TypeScript a validar
+        
+    Returns:
+        Resultado de validación
+    """
+    validation = {
+        "valid": True,
+        "errors": [],
+        "warnings": []
+    }
+    
+    # Verificar balance de llaves
+    open_braces = code.count('{')
+    close_braces = code.count('}')
+    if open_braces != close_braces:
+        validation["valid"] = False
+        validation["errors"].append("Llaves no balanceadas")
+    
+    # Verificar interfaces básicas
+    interface_pattern = r'interface\s+(\w+)\s*{'
+    interfaces = re.findall(interface_pattern, code)
+    for interface_name in interfaces:
+        if not interface_name[0].isupper():
+            validation["warnings"].append(f"Interface '{interface_name}' debería empezar con mayúscula")
+    
+    # Verificar imports
+    import_pattern = r"import\s+.*?from\s+['\"]([^'\"]+)['\"]"
+    imports = re.findall(import_pattern, code)
+    for imp in imports:
+        if imp.startswith('./') or imp.startswith('../'):
+            # Import relativo - verificar extensión
+            if not imp.endswith('.tsx') and not imp.endswith('.ts') and '.' in imp:
+                validation["warnings"].append(f"Import relativo '{imp}' podría necesitar extensión")
+    
+    return validation
+
+
+def optimize_component_imports(code: str) -> str:
+    """
+    Optimizar imports de componentes
+    
+    Args:
+        code: Código con imports
+        
+    Returns:
+        Código optimizado
+    """
+    # Agrupar imports por tipo
+    react_imports = []
+    external_imports = []
+    relative_imports = []
+    
+    import_pattern = r"import\s+(.*?)\s+from\s+['\"]([^'\"]+)['\"]"
+    imports = re.findall(import_pattern, code)
+    
+    for import_content, import_path in imports:
+        if import_path == 'react':
+            react_imports.append(f"import {import_content} from 'react'")
+        elif import_path.startswith('./') or import_path.startswith('../'):
+            relative_imports.append(f"import {import_content} from '{import_path}'")
+        else:
+            external_imports.append(f"import {import_content} from '{import_path}'")
+    
+    # Remover imports originales
+    code_without_imports = re.sub(import_pattern, '', code)
+    
+    # Reorganizar imports
+    optimized_imports = []
+    if react_imports:
+        optimized_imports.extend(react_imports)
+        optimized_imports.append("")
+    
+    if external_imports:
+        optimized_imports.extend(sorted(external_imports))
+        optimized_imports.append("")
+    
+    if relative_imports:
+        optimized_imports.extend(sorted(relative_imports))
+        optimized_imports.append("")
+    
+    return '\n'.join(optimized_imports) + code_without_imports.strip()
+
+
+def generate_component_test(component_name: str, framework: str) -> str:
+    """
+    Generar test básico para componente
+    
+    Args:
+        component_name: Nombre del componente
+        framework: Framework usado
+        
+    Returns:
+        Código del test
+    """
+    if framework in ["nextjs", "react"]:
+        return f"""import {{ render, screen }} from '@testing-library/react'
+import {component_name} from './{component_name}'
+
+describe('{component_name}', () => {{
+  it('renders without crashing', () => {{
+    render(<{component_name} />)
+    expect(screen.getByRole('main')).toBeInTheDocument()
+  }})
+  
+  it('displays correct content', () => {{
+    render(<{component_name} />)
+    // Add specific assertions here
+  }})
+}})
+"""
+    elif framework == "vue":
+        return f"""import {{ describe, it, expect }} from 'vitest'
+import {{ mount }} from '@vue/test-utils'
+import {component_name} from './{component_name}.vue'
+
+describe('{component_name}', () => {{
+  it('renders properly', () => {{
+    const wrapper = mount({component_name})
+    expect(wrapper.exists()).toBe(true)
+  }})
+  
+  it('displays correct content', () => {{
+    const wrapper = mount({component_name})
+    // Add specific assertions here
+  }})
+}})
+"""
+    else:
+        return f"// Test for {component_name} - {framework} not supported yet"
+
+
+def get_framework_specific_config(framework: str) -> Dict[str, Any]:
+    """
+    Obtener configuración específica del framework
+    
+    Args:
+        framework: Nombre del framework
+        
+    Returns:
+        Configuración específica
+    """
+    framework_configs = {
+        "nextjs": {
+            "file_extensions": [".tsx", ".ts", ".jsx", ".js"],
+            "config_files": ["next.config.js", "next.config.mjs"],
+            "special_dirs": ["app", "pages", "public", ".next"],
+            "dev_command": "npm run dev",
+            "build_command": "npm run build",
+            "type_checking": "npm run type-check"
+        },
+        "react": {
+            "file_extensions": [".tsx", ".ts", ".jsx", ".js"],
+            "config_files": ["vite.config.ts", "webpack.config.js"],
+            "special_dirs": ["src", "public", "build", "dist"],
+            "dev_command": "npm run dev",
+            "build_command": "npm run build",
+            "type_checking": "npm run type-check"
+        },
+        "vue": {
+            "file_extensions": [".vue", ".ts", ".js"],
+            "config_files": ["vite.config.ts", "vue.config.js"],
+            "special_dirs": ["src", "public", "dist"],
+            "dev_command": "npm run dev",
+            "build_command": "npm run build",
+            "type_checking": "npm run type-check"
+        }
+    }
+    
+    return framework_configs.get(framework, {})
+
+
+def calculate_bundle_impact(dependencies: List[str]) -> Dict[str, Any]:
+    """
+    Calcular impacto estimado en el bundle de las dependencias
+    
+    Args:
+        dependencies: Lista de dependencias
+        
+    Returns:
+        Análisis de impacto en el bundle
+    """
+    # Tamaños aproximados de librerías comunes (en KB)
+    library_sizes = {
+        "react": 45,
+        "react-dom": 130,
+        "next": 0,  # Next.js optimiza automáticamente
+        "vue": 40,
+        "@vue/reactivity": 20,
+        "lodash": 70,
+        "moment": 230,
+        "date-fns": 20,
+        "axios": 15,
+        "tailwindcss": 0,  # CSS, no JS
+        "styled-components": 25,
+        "@emotion/react": 30,
+        "framer-motion": 120,
+        "three": 600,
+        "chart.js": 200,
+    }
+    
+    total_size = 0
+    heavy_dependencies = []
+    recommendations = []
+    
+    for dep in dependencies:
+        size = library_sizes.get(dep, 50)  # Default 50KB
+        total_size += size
+        
+        if size > 100:
+            heavy_dependencies.append({"name": dep, "size": size})
+        
+        # Recomendaciones específicas
+        if dep == "moment":
+            recommendations.append("Considera usar date-fns en lugar de moment para reducir bundle size")
+        elif dep == "lodash":
+            recommendations.append("Importa funciones específicas de lodash: import { debounce } from 'lodash'")
+        elif dep == "three":
+            recommendations.append("Three.js es pesado, considera lazy loading para componentes 3D")
+    
+    return {
+        "total_estimated_size": total_size,
+        "heavy_dependencies": heavy_dependencies,
+        "recommendations": recommendations,
+        "performance_impact": "high" if total_size > 500 else "medium" if total_size > 200 else "low"
+    }
