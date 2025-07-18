@@ -1,0 +1,50 @@
+# ===== CONFIGURACIÓN ECOSISTEMA GENESIS =====
+
+[tool.genesis]
+ecosystem_role = "frontend-generation"
+agent_types = ["nextjs", "react", "vue", "ui"]
+dependencies = ["mcpturbo", "genesis-templates"]
+api_version = "1.0"
+doctrine_version = "1.0"
+
+[tool.genesis.agents]
+nextjs = "genesis_frontend.agents:NextJSAgent"
+react = "genesis_frontend.agents:ReactAgent" 
+vue = "genesis_frontend.agents:VueAgent"
+ui = "genesis_frontend.agents:UIAgent"
+
+[tool.genesis.capabilities]
+frameworks = ["nextjs", "react", "vue"]
+build_tools = ["vite", "webpack", "parcel"]
+ui_libraries = ["tailwindcss", "styled_components", "material_ui", "chakra_ui"]
+state_management = ["redux_toolkit", "zustand", "pinia", "vuex"]
+testing = ["vitest", "jest", "testing_library"]
+llm_integration = ["openai", "claude", "deepseek"]
+
+[tool.genesis.templates]
+base_path = "templates"
+cache_enabled = true
+auto_reload = false  # Solo en desarrollo
+
+[tool.genesis.doctrina]
+# Siguiendo la doctrina del ecosistema genesis-frontend
+no_cli = true  # No debe tener interfaz CLI
+no_orchestration = true  # No coordina workflows generales
+frontend_only = true  # Solo funcionalidad frontend
+mcpturbo_required = true  # Comunicación via MCPturbo
+llm_enabled = true  # Generación inteligente con LLMs
+template_collaboration = true  # Colabora con genesis-templates
+
+[tool.genesis.integration]
+# Integración con otros componentes del ecosistema
+core_compatibility = "1.0"
+templates_compatibility = "1.0" 
+agents_compatibility = "1.0"
+mcpturbo_compatibility = "1.0"
+
+[tool.genesis.validation]
+# Validaciones específicas del ecosistema
+validate_doctrine_compliance = true
+validate_agent_interfaces = true
+validate_mcp_handlers = true
+validate_llm_integration = true
