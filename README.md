@@ -484,6 +484,7 @@ mypy .
 ## 📄 Licencia
 
 MIT License - ver [LICENSE](LICENSE) para detalles.
+El archivo LICENSE se encuentra en la raíz del repositorio.
 
 ## 🔗 Ecosistema Genesis
 
