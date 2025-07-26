@@ -261,7 +261,7 @@ class NextJSAgent(FrontendAgent):
         
         # Crear directorios
         for directory in directories:
-            (base_path / directory).mkdir(parents=True, exist_ok=True)
+            self.repo.add_file(f"{directory}/.gitkeep", "")
     
     async def _generate_package_json(self, output_path: Path, config: NextJSConfig, schema: Dict[str, Any]) -> str:
         """Generar package.json para Next.js"""
@@ -288,10 +288,10 @@ class NextJSAgent(FrontendAgent):
         if "placeholder" in package_content:
             package_content = self._generate_fallback_package_json(project_name, config)
         
-        package_file = output_path / "package.json"
-        package_file.write_text(package_content)
+        package_file = "package.json"
+        self.repo.add_file(package_file, package_content)
         
-        return str(package_file)
+        return package_file
     
     def _generate_fallback_package_json(self, project_name: str, config: NextJSConfig) -> str:
         """Generar package.json fallback"""
@@ -355,10 +355,10 @@ const nextConfig = {
 module.exports = nextConfig
 """
         
-        config_file = output_path / "next.config.js"
-        config_file.write_text(next_config_content)
+        config_file = "next.config.js"
+        self.repo.add_file(config_file, next_config_content)
         
-        return str(config_file)
+        return config_file
     
     async def _generate_tsconfig(self, output_path: Path, config: NextJSConfig) -> str:
         """Generar tsconfig.json"""
@@ -391,10 +391,10 @@ module.exports = nextConfig
   "exclude": ["node_modules"]
 }"""
         
-        tsconfig_file = output_path / "tsconfig.json"
-        tsconfig_file.write_text(tsconfig_content)
+        tsconfig_file = "tsconfig.json"
+        self.repo.add_file(tsconfig_file, tsconfig_content)
         
-        return str(tsconfig_file)
+        return tsconfig_file
     
     async def _generate_tailwind_config(self, output_path: Path, config: NextJSConfig) -> List[str]:
         """Generar configuración Tailwind CSS"""
@@ -421,9 +421,9 @@ module.exports = {
 }
 """
         
-        tailwind_file = output_path / "tailwind.config.js"
-        tailwind_file.write_text(tailwind_config)
-        files.append(str(tailwind_file))
+        tailwind_file = "tailwind.config.js"
+        self.repo.add_file(tailwind_file, tailwind_config)
+        files.append(tailwind_file)
         
         # postcss.config.js
         postcss_config = """module.exports = {
@@ -434,9 +434,9 @@ module.exports = {
 }
 """
         
-        postcss_file = output_path / "postcss.config.js"
-        postcss_file.write_text(postcss_config)
-        files.append(str(postcss_file))
+        postcss_file = "postcss.config.js"
+        self.repo.add_file(postcss_file, postcss_config)
+        files.append(postcss_file)
         
         return files
     
@@ -464,10 +464,10 @@ module.exports = {
         if "placeholder" in layout_content:
             layout_content = self._generate_fallback_layout(project_name, config)
         
-        layout_file = output_path / "app" / "layout.tsx"
-        layout_file.write_text(layout_content)
+        layout_file = "app/layout.tsx"
+        self.repo.add_file(layout_file, layout_content)
         
-        return str(layout_file)
+        return layout_file
     
     def _generate_fallback_layout(self, project_name: str, config: NextJSConfig) -> str:
         """Generar layout fallback"""
@@ -520,10 +520,10 @@ export default function RootLayout({{
         if "placeholder" in page_content:
             page_content = self._generate_fallback_page(project_name, config)
         
-        page_file = output_path / "app" / "page.tsx"
-        page_file.write_text(page_content)
+        page_file = "app/page.tsx"
+        self.repo.add_file(page_file, page_content)
         
-        return str(page_file)
+        return page_file
     
     def _generate_fallback_page(self, project_name: str, config: NextJSConfig) -> str:
         """Generar página fallback"""
@@ -621,9 +621,9 @@ export default function RootLayout({{
   )
 }"""
         
-        header_file = output_path / "components" / "layout" / "Header.tsx"
-        header_file.write_text(header_content)
-        files.append(str(header_file))
+        header_file = "components/layout/Header.tsx"
+        self.repo.add_file(header_file, header_content)
+        files.append(header_file)
         
         # Footer component
         footer_content = """export default function Footer() {
@@ -638,9 +638,9 @@ export default function RootLayout({{
   )
 }"""
         
-        footer_file = output_path / "components" / "layout" / "Footer.tsx"
-        footer_file.write_text(footer_content)
-        files.append(str(footer_file))
+        footer_file = "components/layout/Footer.tsx"
+        self.repo.add_file(footer_file, footer_content)
+        files.append(footer_file)
         
         return files
     
@@ -675,10 +675,10 @@ body {
 }
 """
         
-        css_file = output_path / "app" / "globals.css"
-        css_file.write_text(css_content)
+        css_file = "app/globals.css"
+        self.repo.add_file(css_file, css_content)
         
-        return str(css_file)
+        return css_file
     
     async def _generate_eslint_config(self, output_path: Path, config: NextJSConfig) -> str:
         """Generar configuración ESLint"""
@@ -687,10 +687,10 @@ body {
 }
 """
         
-        eslint_file = output_path / ".eslintrc.json"
-        eslint_file.write_text(eslint_content)
+        eslint_file = ".eslintrc.json"
+        self.repo.add_file(eslint_file, eslint_content)
         
-        return str(eslint_file)
+        return eslint_file
     
     def _get_next_steps(self, config: NextJSConfig) -> List[str]:
         """Obtener siguientes pasos"""

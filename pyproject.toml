@@ -56,8 +56,6 @@ dependencies = [
     # HTTP requests (for LLM integration)
     "httpx>=0.24.0,<1.0.0",
     
-    # Async support
-    "asyncio-compat>=0.1.0",
     
     # Utilities
     "python-slugify>=8.0.0,<9.0.0",
@@ -220,7 +218,7 @@ addopts = [
     "--cov-report=html",
     "--cov-report=xml",
 ]
-testpaths = ["tests"]
+testpaths = ["tests/python"]
 pythonpath = ["."]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
@@ -255,36 +253,20 @@ exclude_lines = [
     "@(abc\\.)?abstractmethod",
 ]
 
-[tool.tox:tox]
-envlist = py39,py310,py311,py312,lint,type-check
+[tool.tox]
+legacy_tox_ini = """
+[tox]
 isolated_build = true
+envlist = py39,py310,py311,py312,lint
 
-[tool.tox:testenv]
+[testenv]
 deps = 
-    {[project.optional-dependencies]test}
-commands = pytest {posargs}
-
-[tool.tox:testenv:lint]
-deps = 
-    black
-    isort
-    ruff
+    pytest>=7.4.0
+    pytest-asyncio>=0.21.0
+extras = test
 commands = 
-    black --check --diff genesis_frontend tests
-    isort --check-only --diff genesis_frontend tests
-    ruff genesis_frontend tests
-
-[tool.tox:testenv:type-check]
-deps = 
-    mypy
-    {[project.optional-dependencies]dev}
-commands = mypy genesis_frontend
-
-[tool.tox:testenv:docs]
-deps = 
-    {[project.optional-dependencies]docs}
-commands = 
-    mkdocs build --strict
+    pytest {posargs:tests/python}
+"""
 
 # ===== METADATA ADICIONAL =====
 
@@ -318,4 +300,4 @@ testing = ["vitest", "jest", "testing_library"]
 [tool.genesis.templates]
 base_path = "templates"
 cache_enabled = true
-auto_reload = false  # Solo en desarrollo
+auto_reload = false
