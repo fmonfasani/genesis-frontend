@@ -9,6 +9,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 import uuid
+from pathlib import Path
 
 # Importar desde MCPturbo (protocolo central)
 try:
@@ -48,6 +49,8 @@ except ImportError:
             self.result = result
             self.error = error
 
+from genesis_frontend.core.repo import Repo
+
 logger = logging.getLogger(__name__)
 
 class FrontendAgent(MCPAgent, ABC):
@@ -62,7 +65,7 @@ class FrontendAgent(MCPAgent, ABC):
     - Usa LLMs para generación inteligente
     """
     
-    def __init__(self, agent_id: str, name: str, specialization: str):
+    def __init__(self, agent_id: str, name: str, specialization: str, repo: Optional[Repo] = None):
         super().__init__()
         self.agent_id = agent_id
         self.name = name
@@ -82,6 +85,8 @@ class FrontendAgent(MCPAgent, ABC):
         # MCPturbo integration
         self.mcp_client = None
         
+        self.repo = repo or Repo(Path(f"./{self.agent_id}-repo"))
+
     def add_capability(self, capability: str):
         """Agregar capacidad del agente"""
         if capability not in self.capabilities:

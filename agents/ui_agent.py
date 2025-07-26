@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from .base_agent import FrontendAgent, AgentTask, TaskResult
+from genesis_frontend.core.multi_repo import MultiRepoManager
 
 
 class DesignSystem(str, Enum):
@@ -94,6 +95,8 @@ class UIAgent(FrontendAgent):
         
         # Registrar handlers específicos
         self.register_handler("create_design_system", self._handle_create_design_system)
+
+        self.multi_repo_manager = MultiRepoManager(Path("./managed-repos"))
         self.register_handler("generate_color_palette", self._handle_generate_color_palette)
         self.register_handler("create_component_library", self._handle_create_component_library)
         self.register_handler("setup_typography", self._handle_setup_typography)
@@ -167,7 +170,9 @@ class UIAgent(FrontendAgent):
         
         # Extraer configuración
         config = self._extract_ui_config(params)
-        output_path = Path(params.get("output_path", "./"))
+        repo_name = params.get("repo_name", "design-system")
+        self.repo = self.multi_repo_manager.new_repo(repo_name)
+        output_path = self.repo.path
         schema = params.get("schema", {})
         
         # Crear estructura de directorios para UI

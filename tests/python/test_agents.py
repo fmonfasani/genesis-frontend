@@ -164,6 +164,7 @@ class TestNextJSAgent:
         assert result.task_id == "test_task"
         assert "framework" in result.result
         assert result.result["framework"] == "nextjs"
+        assert "package.json" in nextjs_agent.repo.list_files()
 
 
 class TestReactAgent:
